@@ -41,12 +41,24 @@ set(CENTURION_MOCK_TARGET mockcenturion)
 option(BUILD_TESTS "Build the test suite" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 option(INCLUDE_AUDIO_TESTS "Test audio components" ON)
+option(USE_SDL2_IMAGE "Require SDL2_image" ON)
+option(USE_SDL2_MIXER "Require SDL2_mixer" ON)
+option(USE_SDL2_TTF "Require SDL2_ttf" ON)
 
 # System dependencies
 find_package(SDL2 REQUIRED)
-find_package(SDL2_image REQUIRED)
-find_package(SDL2_mixer REQUIRED)
-find_package(SDL2_ttf REQUIRED)
+
+if (USE_SDL2_IMAGE)
+  find_package(SDL2_image REQUIRED)
+endif()
+
+if (USE_SDL2_MIXER)
+  find_package(SDL2_mixer REQUIRED)
+endif()
+
+if (USE_SDL2_TTF)
+  find_package(SDL2_ttf REQUIRED)
+endif()
 
 if (BUILD_TESTS)
   # Vcpkg test dependencies
