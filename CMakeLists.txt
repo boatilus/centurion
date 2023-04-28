@@ -48,17 +48,17 @@ option(USE_SDL2_TTF "Require SDL2_ttf" ON)
 # System dependencies
 find_package(SDL2 REQUIRED)
 
-if (USE_SDL2_IMAGE)
-  find_package(SDL2_image REQUIRED)
-endif()
+# if (USE_SDL2_IMAGE)
+#   find_package(SDL2_image REQUIRED)
+# endif()
 
-if (USE_SDL2_MIXER)
-  find_package(SDL2_mixer REQUIRED)
-endif()
+# if (USE_SDL2_MIXER)
+#   find_package(SDL2_mixer REQUIRED)
+# endif()
 
-if (USE_SDL2_TTF)
-  find_package(SDL2_ttf REQUIRED)
-endif()
+# if (USE_SDL2_TTF)
+#   find_package(SDL2_ttf REQUIRED)
+# endif()
 
 if (BUILD_TESTS)
   # Vcpkg test dependencies
