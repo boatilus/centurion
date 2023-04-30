@@ -1,46 +1,69 @@
 cmake_minimum_required(VERSION 3.15)
 
-if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-endif ()
+# ---- Project ----
 
-project(centurion
-        VERSION 7.3.0
-        HOMEPAGE_URL "https://github.com/albin-johansson/centurion"
-        LANGUAGES CXX)
+# Note: update this to your new project's name and version
+project(centuron 
+  VERSION 7.3.0
+  HOMEPAGE_URL "https://github.com/albin-johansson/centurion"
+  LANGUAGES CXX
+)
 
 if (${CMAKE_CXX_STANDARD} STREQUAL "")
   set(CMAKE_CXX_STANDARD 17)
 endif ()
 
-set(CXX_STANDARD_REQUIRED ON)
-set(CXX_EXTENSIONS OFF)
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+# ---- Include guards ----
 
-set(CENTURION_VERSION ${CMAKE_PROJECT_VERSION})
-message("[centurion]: version ${CENTURION_VERSION}")
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+    message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.")
+endif()
 
-message("[centurion]: CMAKE_CXX_STANDARD is '${CMAKE_CXX_STANDARD}'")
-message("[centurion]: CMAKE_CXX_COMPILER is '${CMAKE_CXX_COMPILER}'")
-message("[centurion]: CMAKE_CXX_COMPILER_ID is '${CMAKE_CXX_COMPILER_ID}'")
+# --- Import tools ----
 
-include(cmake/centurion.cmake)
+include(cmake/tools.cmake)
 
-# Directories
-set(CEN_ROOT_DIR "${PROJECT_SOURCE_DIR}")
-set(CEN_RESOURCES_DIR "${PROJECT_SOURCE_DIR}/test/resources")
-set(CEN_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
-set(CEN_BINARIES_DIR "${PROJECT_SOURCE_DIR}/bin")
+# ---- Add dependencies via CPM ----
+# see https://github.com/TheLartians/CPM.cmake for more info
 
-# Target names
-set(CENTURION_LIB_TARGET libcenturion)
-set(CENTURION_TEST_TARGET testcenturion)
-set(CENTURION_MOCK_TARGET mockcenturion)
+include(cmake/CPM.cmake)
 
-# Build options
-option(BUILD_TESTS "Build the test suite" OFF)
-option(BUILD_EXAMPLES "Build the examples" OFF)
-option(INCLUDE_AUDIO_TESTS "Test audio components" ON)
+# PackageProject.cmake will be used to make our target installable
+CPMAddPackage(
+  NAME PackageProject.cmake
+  GITHUB_REPOSITORY TheLartians/PackageProject.cmake
+  VERSION 1.0
+)
+
+# ---- Add source files ----
+
+FILE(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
+
+# ---- Create library ----
+
+add_library(${PROJECT_NAME} INTERFACE)
+set_target_properties(${PROJECT_NAME} PROPERTIES INTERFACE_COMPILE_FEATURES cxx_std_20)
+
+# beeing a cross-platform target, we enforce enforce standards conformance on MSVC
+target_compile_options(${PROJECT_NAME} INTERFACE "$<$<BOOL:${MSVC}>:/permissive->")
+
+target_include_directories(${PROJECT_NAME}
+INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+)
+
+# ---- Create an installable target ----
+# this allows users to install and find the library via `find_package()`.
+
+packageProject(
+  NAME ${PROJECT_NAME}
+  VERSION ${PROJECT_VERSION}
+  BINARY_DIR ${PROJECT_BINARY_DIR}
+  INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
+  INCLUDE_DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}
+)
+
 option(USE_SDL2_IMAGE "Require SDL2_image" ON)
 option(USE_SDL2_MIXER "Require SDL2_mixer" ON)
 option(USE_SDL2_TTF "Require SDL2_ttf" ON)
@@ -59,16 +82,3 @@ find_package(SDL2 REQUIRED)
 # if (USE_SDL2_TTF)
 #   find_package(SDL2_ttf REQUIRED)
 # endif()
-
-if (BUILD_TESTS)
-  # Vcpkg test dependencies
-  find_package(GTest CONFIG REQUIRED)
-  find_package(cereal CONFIG REQUIRED)
-  find_package(GLEW REQUIRED)
-
-  add_subdirectory(test)
-endif ()
-
-if (BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif ()
